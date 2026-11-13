@@ -5,6 +5,8 @@ export const CTA = "Pesa tutti i ruoli della tua azienda con Spark";
 
 export const CALENDLY_URL = "https://calendly.com/gbasso-syyz/30-min-meeting";
 
+export const PRIVACY_URL = "https://tryspark.co/informativa-privacy/";
+
 export const TOOL = "pesatura-hay";
 
 export const MAX_JD = 6000;
