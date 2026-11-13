@@ -67,6 +67,7 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
   const [errore, setErrore] = useState("");
   const [conferma, setConferma] = useState("");
   const [moduloAperto, setModuloAperto] = useState(true);
+  const [popupMail, setPopupMail] = useState(false);
   const [pronto, setPronto] = useState(false);
   const [utm, setUtm] = useState<Record<string, string>>({});
 
@@ -114,6 +115,17 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
     const id = window.setInterval(() => setPasso((valore) => valore + 1), 2200);
     return () => window.clearInterval(id);
   }, [attesa]);
+
+  useEffect(() => {
+    if (!popupMail) return;
+    function chiudi(evento: KeyboardEvent) {
+      if (evento.key !== "Escape" || attesa === "lead") return;
+      setErrore("");
+      setPopupMail(false);
+    }
+    window.addEventListener("keydown", chiudi);
+    return () => window.removeEventListener("keydown", chiudi);
+  }, [popupMail, attesa]);
 
   const ruoloAttivo = ruoli.find((ruolo) => ruolo.id === selezionato) ?? ruoli[0];
   const anagraficaPronta =
@@ -231,7 +243,11 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
         })),
       });
       setSbloccato(true);
-      setConferma(`Report inviato a ${lead.email.trim()}. Controlla la posta, anche nello spam.`);
+      setPopupMail(false);
+      setModuloAperto(true);
+      svuotaModulo();
+      setConferma(`Report inviato a ${lead.email.trim()}. Ora puoi pesare altri ruoli.`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       setErrore(messaggioDi(error));
     } finally {
@@ -265,9 +281,27 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function chiudiPopup() {
+    if (attesa === "lead") return;
+    setErrore("");
+    setPopupMail(false);
+  }
+
+  function pesaUnAltro() {
+    if (mostraModulo) {
+      tornaAlRisultato();
+      return;
+    }
+    if (!sbloccato) {
+      setErrore("");
+      setPopupMail(true);
+      return;
+    }
+    nuovaPesatura();
+  }
+
   const puoAggiungere = !sbloccato || ruoli.length < MAX_RUOLI;
   const mostraModulo = moduloAperto && puoAggiungere;
-  const mostraGate = Boolean(ruoloAttivo) && (!sbloccato || !anagraficaPronta);
   const messaggioAttesa = attesa ? MESSAGGI[attesa][Math.min(passo, MESSAGGI[attesa].length - 1)] : "";
 
   if (!pronto) {
@@ -294,7 +328,7 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
             type="button"
             variante="secondario"
             className="w-full"
-            onClick={mostraModulo ? tornaAlRisultato : nuovaPesatura}
+            onClick={pesaUnAltro}
           >
             {mostraModulo ? "Torna alla pesatura" : "Pesa un altro ruolo"}
           </Bottone>
@@ -381,7 +415,7 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
           {messaggioAttesa}
         </p>
       ) : null}
-      {errore ? (
+      {errore && !popupMail ? (
         <p role="alert" className="rounded-2xl border border-[#f0c9c4] bg-[#fff6f5] px-4 py-3 text-sm text-[#8a2e24]">
           {errore}
         </p>
@@ -400,69 +434,88 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
         </p>
       ) : null}
 
-      {mostraGate && !mostraModulo ? (
-        <section className="rounded-2xl border border-linea bg-white p-4">
-          <h2 className="text-lg font-semibold">Ricevi il report e pesa fino a 10 ruoli</h2>
-          <p className="mt-1 text-sm leading-5 text-muto">
-            Il PDF arriva via email, così l&apos;indirizzo è quello aziendale.
-          </p>
-          <form
-            className="relative mt-4 flex flex-col gap-3"
-            onSubmit={(evento) => {
-              evento.preventDefault();
-              void inviaLead();
-            }}
+      {popupMail ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-[#202020]/40 p-4 sm:items-center"
+          onClick={chiudiPopup}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titolo-mail"
+            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-4 shadow-xl"
+            onClick={(evento) => evento.stopPropagation()}
           >
-            <div className="absolute -left-[10000px] h-0 overflow-hidden" aria-hidden="true">
-              <label htmlFor="hp_campo">Non compilare</label>
-              <input
-                id="hp_campo"
-                tabIndex={-1}
-                autoComplete="off"
-                value={lead.honeypot}
-                onChange={(evento) => setLead({ ...lead, honeypot: evento.target.value })}
-              />
-            </div>
-            <Campo label="Nome e cognome" value={lead.nome} onChange={(nome) => setLead({ ...lead, nome })} autoComplete="name" maxLength={80} />
-            <Campo label="Email aziendale" value={lead.email} onChange={(email) => setLead({ ...lead, email })} type="email" autoComplete="email" maxLength={200} />
-            <Campo label="Azienda" value={lead.azienda} onChange={(azienda) => setLead({ ...lead, azienda })} autoComplete="organization" maxLength={120} />
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Numero di dipendenti
-              <select
-                value={lead.dipendenti}
-                onChange={(evento) => setLead({ ...lead, dipendenti: evento.target.value as FasciaDipendenti | "" })}
-                className="h-12 rounded-xl border border-linea bg-white px-3 text-base font-normal outline-none focus:border-accento"
-              >
-                <option value="">Seleziona</option>
-                {FASCE_DIPENDENTI.map((fascia) => (
-                  <option key={fascia} value={fascia}>
-                    {fascia}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Campo label="Il tuo ruolo" value={lead.ruolo} onChange={(ruolo) => setLead({ ...lead, ruolo })} autoComplete="organization-title" maxLength={120} />
-            <label className="flex items-start gap-2 text-sm font-normal leading-5">
-              <input
-                type="checkbox"
-                checked={lead.consenso}
-                onChange={(evento) => setLead({ ...lead, consenso: evento.target.checked })}
-                className="mt-1"
-                required
-              />
-              <span>
-                Ho letto l&apos;
-                <a href={privacyUrl} target="_blank" rel="noopener noreferrer" className="underline">
-                  informativa privacy
-                </a>{" "}
-                e acconsento al trattamento dei dati per ricevere il report.
-              </span>
-            </label>
-            <Bottone type="submit" disabled={attesa !== null}>
-              {attesa === "lead" ? "Invio in corso…" : "Invia il report"}
-            </Bottone>
-          </form>
-        </section>
+            <h2 id="titolo-mail" className="text-lg font-semibold">Per pesare altri ruoli</h2>
+            <p className="mt-1 text-sm leading-5 text-muto">
+              Inserisci la tua email aziendale. Ti arriva il report e si sbloccano fino a 10 ruoli.
+            </p>
+            <form
+              className="relative mt-4 flex flex-col gap-3"
+              onSubmit={(evento) => {
+                evento.preventDefault();
+                void inviaLead();
+              }}
+            >
+              <div className="absolute -left-[10000px] h-0 overflow-hidden" aria-hidden="true">
+                <label htmlFor="hp_campo">Non compilare</label>
+                <input
+                  id="hp_campo"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={lead.honeypot}
+                  onChange={(evento) => setLead({ ...lead, honeypot: evento.target.value })}
+                />
+              </div>
+              <Campo label="Email aziendale" value={lead.email} onChange={(email) => setLead({ ...lead, email })} type="email" autoComplete="email" maxLength={200} />
+              <Campo label="Nome e cognome" value={lead.nome} onChange={(nome) => setLead({ ...lead, nome })} autoComplete="name" maxLength={80} />
+              <Campo label="Azienda" value={lead.azienda} onChange={(azienda) => setLead({ ...lead, azienda })} autoComplete="organization" maxLength={120} />
+              <label className="flex flex-col gap-1.5 text-sm font-medium">
+                Numero di dipendenti
+                <select
+                  value={lead.dipendenti}
+                  onChange={(evento) => setLead({ ...lead, dipendenti: evento.target.value as FasciaDipendenti | "" })}
+                  className="h-12 rounded-xl border border-linea bg-white px-3 text-base font-normal outline-none focus:border-accento"
+                >
+                  <option value="">Seleziona</option>
+                  {FASCE_DIPENDENTI.map((fascia) => (
+                    <option key={fascia} value={fascia}>
+                      {fascia}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Campo label="Il tuo ruolo" value={lead.ruolo} onChange={(ruolo) => setLead({ ...lead, ruolo })} autoComplete="organization-title" maxLength={120} />
+              <label className="flex items-start gap-2 text-sm font-normal leading-5">
+                <input
+                  type="checkbox"
+                  checked={lead.consenso}
+                  onChange={(evento) => setLead({ ...lead, consenso: evento.target.checked })}
+                  className="mt-1"
+                  required
+                />
+                <span>
+                  Ho letto l&apos;
+                  <a href={privacyUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                    informativa privacy
+                  </a>{" "}
+                  e acconsento al trattamento dei dati per ricevere il report.
+                </span>
+              </label>
+              {errore ? (
+                <p role="alert" className="rounded-xl border border-[#f0c9c4] bg-[#fff6f5] px-3 py-2 text-sm text-[#8a2e24]">
+                  {errore}
+                </p>
+              ) : null}
+              <Bottone type="submit" disabled={attesa !== null}>
+                {attesa === "lead" ? "Invio in corso…" : "Sblocca le pesature"}
+              </Bottone>
+              <Bottone type="button" variante="secondario" onClick={chiudiPopup} disabled={attesa === "lead"}>
+                Chiudi
+              </Bottone>
+            </form>
+          </div>
+        </div>
       ) : null}
 
       {sbloccato && ruoli.length > 0 ? (
