@@ -66,6 +66,7 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
   const [passo, setPasso] = useState(0);
   const [errore, setErrore] = useState("");
   const [conferma, setConferma] = useState("");
+  const [moduloAperto, setModuloAperto] = useState(true);
   const [pronto, setPronto] = useState(false);
   const [utm, setUtm] = useState<Record<string, string>>({});
 
@@ -75,7 +76,10 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
         const salvato = sessionStorage.getItem(CHIAVE);
         if (salvato) {
           const dati = JSON.parse(salvato) as { ruoli?: RuoloUi[]; lead?: LeadForm | null; sbloccato?: boolean };
-          if (Array.isArray(dati.ruoli)) setRuoli(dati.ruoli.slice(0, MAX_RUOLI));
+          if (Array.isArray(dati.ruoli)) {
+            setRuoli(dati.ruoli.slice(0, MAX_RUOLI));
+            if (dati.ruoli.length > 0) setModuloAperto(false);
+          }
           if (dati.lead) setLead({ ...LEAD_VUOTO, ...dati.lead, honeypot: "", consenso: true });
           if (dati.sbloccato) setSbloccato(true);
         }
@@ -180,10 +184,9 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
       const nuovo: RuoloUi = { ...report, id: crypto.randomUUID() };
       setRuoli((attuali) => (sbloccato ? [...attuali, nuovo].slice(0, MAX_RUOLI) : [nuovo]));
       setSelezionato(nuovo.id);
-      if (sbloccato) {
-        setJd("");
-        setBozza(false);
-      }
+      setModuloAperto(false);
+      svuotaModulo();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       setErrore(messaggioDi(error));
     } finally {
@@ -236,23 +239,69 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
     }
   }
 
+  function svuotaModulo() {
+    setTitolo("");
+    setJd("");
+    setBozza(false);
+    setSettore("");
+    setDimensioneAzienda("");
+    setRiportaA("");
+    setNumeroRiporti("");
+    setBudgetOFatturato("");
+    setModalita("jd");
+  }
+
+  function nuovaPesatura() {
+    svuotaModulo();
+    setErrore("");
+    setConferma("");
+    setModuloAperto(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function tornaAlRisultato() {
+    setErrore("");
+    setModuloAperto(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   const puoAggiungere = !sbloccato || ruoli.length < MAX_RUOLI;
+  const mostraModulo = moduloAperto && puoAggiungere;
   const mostraGate = Boolean(ruoloAttivo) && (!sbloccato || !anagraficaPronta);
   const messaggioAttesa = attesa ? MESSAGGI[attesa][Math.min(passo, MESSAGGI[attesa].length - 1)] : "";
+
+  if (!pronto) {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 py-6">
+        <Image src="/logo-spark.png" alt="Spark" width={142} height={64} className="h-8 w-auto self-start" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 py-6">
       <header className="flex flex-col gap-3">
         <Image src="/logo-spark.png" alt="Spark" width={142} height={64} className="h-8 w-auto self-start" />
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Pesatura di un ruolo</h1>
-          <p className="mt-1 text-sm leading-5 text-muto">
-            Una stima sui tre fattori del metodo Hay, con l’impegno richiesto dal ruolo. Il primo ruolo è immediato.
-          </p>
-        </div>
+        {mostraModulo && !ruoloAttivo ? (
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Pesatura di un ruolo</h1>
+            <p className="mt-1 text-sm leading-5 text-muto">
+              Una stima sui tre fattori del metodo Hay, con l’impegno richiesto dal ruolo. Il primo ruolo è immediato.
+            </p>
+          </div>
+        ) : ruoloAttivo && puoAggiungere ? (
+          <Bottone
+            type="button"
+            variante="secondario"
+            className="w-full"
+            onClick={mostraModulo ? tornaAlRisultato : nuovaPesatura}
+          >
+            {mostraModulo ? "Torna alla pesatura" : "Pesa un altro ruolo"}
+          </Bottone>
+        ) : null}
       </header>
 
-      {puoAggiungere ? (
+      {mostraModulo ? (
         <section className="rounded-2xl border border-linea bg-white p-4">
           <div className="grid grid-cols-2 gap-2 rounded-xl bg-carta p-1 text-sm font-medium">
             <button
@@ -325,11 +374,7 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
             )}
           </div>
         </section>
-      ) : (
-        <p className="rounded-2xl border border-linea bg-white px-4 py-3 text-sm">
-          Hai raggiunto i 10 ruoli di questa prova.
-        </p>
-      )}
+      ) : null}
 
       {attesa ? (
         <p className="attesa rounded-2xl border border-linea bg-white px-4 py-3 text-sm" aria-live="polite">
@@ -347,9 +392,15 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
         </p>
       ) : null}
 
-      {ruoloAttivo ? <Risultato ruolo={ruoloAttivo} /> : null}
+      {ruoloAttivo && !mostraModulo ? <Risultato ruolo={ruoloAttivo} /> : null}
 
-      {mostraGate ? (
+      {!puoAggiungere && !mostraModulo ? (
+        <p className="rounded-2xl border border-linea bg-white px-4 py-3 text-sm">
+          Hai raggiunto i 10 ruoli di questa prova.
+        </p>
+      ) : null}
+
+      {mostraGate && !mostraModulo ? (
         <section className="rounded-2xl border border-linea bg-white p-4">
           <h2 className="text-lg font-semibold">Ricevi il report e pesa fino a 10 ruoli</h2>
           <p className="mt-1 text-sm leading-5 text-muto">
@@ -469,12 +520,12 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
 
 function Risultato({ ruolo }: { ruolo: RuoloUi }) {
   return (
-    <section className="rounded-2xl border border-linea bg-white p-4">
-      <p className="text-sm text-muto">{ruolo.titolo}</p>
-      <div className="mt-2 flex items-end justify-between gap-3">
+    <section id="risultato" className="rounded-2xl border border-linea bg-white p-5">
+      <h1 className="text-xl font-semibold tracking-tight">{ruolo.titolo}</h1>
+      <div className="mt-4 flex items-end justify-between gap-3">
         <div>
-          <p className="text-4xl font-semibold tracking-tight">Grade {ruolo.grade}</p>
-          <p className="text-sm text-muto">Fascia {ruolo.grade} di 12</p>
+          <p className="text-6xl font-semibold tracking-tight">Grade {ruolo.grade}</p>
+          <p className="mt-1 text-sm text-muto">Fascia {ruolo.grade} di 12</p>
         </div>
         <div className="text-right">
           <p className="text-lg font-semibold">{ruolo.totale.toLocaleString("it-IT")} punti</p>
