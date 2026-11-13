@@ -5,9 +5,11 @@ import {
   ETICHETTE_COMPLESSITA,
   ETICHETTE_CONOSCENZE,
   ETICHETTE_DIMENSIONE,
+  ETICHETTE_IMPEGNO,
   ETICHETTE_IMPATTO,
   ETICHETTE_LIBERTA,
   ETICHETTE_RELAZIONI,
+  type LivelloImpegno,
 } from "./etichette";
 import { calcolaPesatura, type LivelliRuolo, type LivelloAH, type LivelloAmpiezza, type LivelloComplessita, type LivelloRelazioni, type TipoImpatto } from "./scoring";
 
@@ -44,6 +46,12 @@ export const schemaClassificazione = z.strictObject({
     problemSolving: z.string().min(1).max(800),
     responsabilita: z.string().min(1).max(800),
   }),
+  impegno: z.strictObject({
+    livello: z.enum(["1", "2", "3", "4", "5"]),
+    citazione: z.string().max(400),
+    evidenza: z.boolean(),
+    motivazione: z.string().min(1).max(800),
+  }),
   cosaManca: z.array(z.string().max(400)).max(16),
 });
 
@@ -65,12 +73,21 @@ export interface FattoreReport {
   voci: VoceLivello[];
 }
 
+export interface ImpegnoReport {
+  livello: LivelloImpegno;
+  etichetta: string;
+  citazione: string;
+  evidenza: boolean;
+  motivazione: string;
+}
+
 export interface ReportRuolo {
   titolo: string;
   totale: number;
   grade: number;
   confidenza: "bassa" | "media" | "alta";
   cosaManca: string[];
+  impegno: ImpegnoReport;
   fattori: {
     competenza: FattoreReport;
     problemSolving: FattoreReport;
@@ -101,13 +118,14 @@ function applicaLivello(
   minimo: string,
   nome: string,
   mancanze: string[],
+  messaggio?: string,
 ): { livello: string; citazione: string; evidenza: boolean } {
   const citazione = dimensioneGrezza.citazione.trim();
   if (dimensioneGrezza.evidenza && citazione.length > 0) {
     return { livello: dimensioneGrezza.livello, citazione, evidenza: true };
   }
 
-  const frase = `Nella job description non c'è evidenza sufficiente sulle ${nome}: è stato usato il livello più prudente.`;
+  const frase = messaggio ?? `Nella job description non c'è evidenza sufficiente sulle ${nome}: è stato usato il livello più prudente.`;
   if (!mancanze.some((voce) => voce.toLowerCase().includes(nome))) mancanze.push(frase);
   return { livello: minimo, citazione: "", evidenza: false };
 }
@@ -134,6 +152,13 @@ export function componiReport(titolo: string, grezza: ClassificazioneGrezza): Re
   const autonomia = applicaLivello(grezza.responsabilita.autonomia, "A", "autonomia decisionale", mancanze);
   const dimensioneEconomica = applicaLivello(grezza.responsabilita.dimensione, "1", "dimensione economica", mancanze);
   const tipoImpatto = applicaLivello(grezza.responsabilita.impatto, "remoto", "tipo di impatto", mancanze);
+  const impegnoScelto = applicaLivello(
+    grezza.impegno,
+    "1",
+    "impegno",
+    mancanze,
+    "Nella job description non c'è evidenza sufficiente sull'impegno richiesto: è stato usato il livello più prudente.",
+  );
 
   const livelli: LivelliRuolo = {
     competenza: {
@@ -162,6 +187,7 @@ export function componiReport(titolo: string, grezza: ClassificazioneGrezza): Re
     autonomia,
     dimensioneEconomica,
     tipoImpatto,
+    impegnoScelto,
   ].filter((voce) => !voce.evidenza).length;
 
   const voce = (
@@ -178,6 +204,13 @@ export function componiReport(titolo: string, grezza: ClassificazioneGrezza): Re
     grade: pesatura.grade,
     confidenza: confidenzaDa(mancanti),
     cosaManca: mancanze,
+    impegno: {
+      livello: impegnoScelto.livello as LivelloImpegno,
+      etichetta: ETICHETTE_IMPEGNO[impegnoScelto.livello as LivelloImpegno],
+      citazione: impegnoScelto.citazione,
+      evidenza: impegnoScelto.evidenza,
+      motivazione: motivazione(grezza.impegno.motivazione, "richiesta di impegno"),
+    },
     livelli,
     fattori: {
       competenza: {

@@ -67,6 +67,12 @@ function ruoloMinimo() {
         problemSolving: "I problemi sono ripetitivi.",
         responsabilita: "Decide dentro istruzioni puntuali.",
       },
+      impegno: {
+        livello: "2",
+        citazione: "orario di ufficio",
+        evidenza: true,
+        motivazione: "L'impegno è ordinario e prevedibile.",
+      },
       cosaManca: [],
     },
   };

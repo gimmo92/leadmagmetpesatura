@@ -37,6 +37,12 @@ function classificazione(evidenza = true, sovrascritture: Record<string, string>
       problemSolving: "Adatta metodi noti a varianti di problemi già visti.",
       responsabilita: "Contribuisce a un budget di team, senza la decisione finale.",
     },
+    impegno: {
+      livello: sovrascritture.impegno ?? "3",
+      citazione: evidenza ? "frase presente nella job description" : "",
+      evidenza,
+      motivazione: "Il ruolo chiede attenzione continua sui casi del team.",
+    },
     cosaManca: [],
   });
 }
@@ -54,6 +60,7 @@ describe("componiReport", () => {
     expect(report.totale).toBe(308);
     expect(report.grade).toBe(3);
     expect(report.confidenza).toBe("alta");
+    expect(report.impegno).toMatchObject({ livello: "3", etichetta: "Sostenuto", evidenza: true });
     expect(report.cosaManca).toEqual([]);
   });
 
@@ -69,6 +76,7 @@ describe("componiReport", () => {
         autonomia: "H",
         dimensione: "5",
         impatto: "primario",
+        impegno: "5",
       }),
     );
 
@@ -76,8 +84,10 @@ describe("componiReport", () => {
     expect(report.livelli.responsabilita.impatto).toBe("remoto");
     expect(report.totale).toBe(170);
     expect(report.grade).toBe(1);
+    expect(report.impegno.livello).toBe("1");
+    expect(report.impegno.evidenza).toBe(false);
     expect(report.confidenza).toBe("bassa");
-    expect(report.cosaManca).toHaveLength(8);
+    expect(report.cosaManca).toHaveLength(9);
   });
 
   it("pesa la stessa classificazione tre volte con lo stesso grade", () => {

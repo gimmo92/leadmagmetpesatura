@@ -3,11 +3,17 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import type { z } from "zod";
 import { ErroreRichiesta } from "./errori";
 
+const MODELLO_PREDEFINITO = "claude-sonnet-5-5";
+
 function clientAnthropic(): { client: Anthropic; model: string } {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  const model = process.env.ANTHROPIC_MODEL;
-  if (!apiKey || !model) {
-    throw new ErroreRichiesta("Il servizio di classificazione non è configurato.", 500);
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+  const model = process.env.ANTHROPIC_MODEL?.trim() || MODELLO_PREDEFINITO;
+  if (!apiKey) {
+    console.error("ANTHROPIC_API_KEY assente nel processo del server.");
+    throw new ErroreRichiesta(
+      "Manca ANTHROPIC_API_KEY nel server. In locale mettila in .env.local e riavvia. Su Vercel impostala e rifai il deploy.",
+      500,
+    );
   }
   return { client: new Anthropic({ apiKey }), model };
 }

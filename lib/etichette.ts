@@ -70,6 +70,16 @@ export const ETICHETTE_IMPATTO: Record<TipoImpatto, string> = {
   primario: "Primario",
 };
 
+export const ETICHETTE_IMPEGNO = {
+  "1": "Contenuto",
+  "2": "Ordinario",
+  "3": "Sostenuto",
+  "4": "Elevato",
+  "5": "Intenso",
+} as const;
+
+export type LivelloImpegno = keyof typeof ETICHETTE_IMPEGNO;
+
 export function etichettaConfidenza(valore: "bassa" | "media" | "alta"): string {
   if (valore === "alta") return "Alta";
   if (valore === "media") return "Media";

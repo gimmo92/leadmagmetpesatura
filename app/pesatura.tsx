@@ -42,7 +42,7 @@ const LEAD_VUOTO: LeadForm = {
 
 const MESSAGGI: Record<Exclude<Attesa, null>, string[]> = {
   jd: ["Leggo le risposte…", "Scrivo una bozza di job description…"],
-  pesa: ["Leggo la job description…", "Classifico i tre fattori…", "Calcolo il grade…"],
+  pesa: ["Leggo la job description…", "Classifico i fattori e l'impegno…", "Calcolo il grade…"],
   lead: ["Preparo il report…", "Invio il PDF alla tua email…"],
 };
 
@@ -247,7 +247,7 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Pesatura di un ruolo</h1>
           <p className="mt-1 text-sm leading-5 text-muto">
-            Una stima sui tre fattori del metodo Hay. Il primo ruolo è immediato.
+            Una stima sui tre fattori del metodo Hay, con l’impegno richiesto dal ruolo. Il primo ruolo è immediato.
           </p>
         </div>
       </header>
@@ -505,6 +505,20 @@ function Risultato({ ruolo }: { ruolo: RuoloUi }) {
             <p className="mt-2 text-sm leading-5">{fattore.motivazione}</p>
           </article>
         ))}
+        {ruolo.impegno ? (
+          <article className="rounded-xl bg-carta px-3 py-3">
+            <h3 className="text-sm font-semibold">
+              Impegno · {ruolo.impegno.livello}, {ruolo.impegno.etichetta}
+            </h3>
+            {ruolo.impegno.evidenza ? (
+              <p className="mt-2 text-sm leading-5 text-muto">«{ruolo.impegno.citazione}»</p>
+            ) : (
+              <p className="mt-2 text-sm leading-5 text-muto">Livello prudente: la JD non dà evidenza.</p>
+            )}
+            <p className="mt-2 text-sm leading-5">{ruolo.impegno.motivazione}</p>
+            <p className="mt-2 text-sm leading-5 text-muto">Non entra nel punteggio Hay.</p>
+          </article>
+        ) : null}
       </div>
       <div className="mt-4">
         <h3 className="text-sm font-semibold">Cosa manca per una pesatura più precisa</h3>
@@ -515,7 +529,7 @@ function Risultato({ ruolo }: { ruolo: RuoloUi }) {
             ))}
           </ul>
         ) : (
-          <p className="mt-2 text-sm text-muto">La job description copre i tre fattori.</p>
+          <p className="mt-2 text-sm text-muto">La job description copre i tre fattori e l’impegno.</p>
         )}
       </div>
     </section>
@@ -603,6 +617,19 @@ function classificazioneDa(ruolo: ReportRuolo): ClassificazioneGrezza {
       problemSolving: ruolo.fattori.problemSolving.motivazione,
       responsabilita: ruolo.fattori.responsabilita.motivazione,
     },
+    impegno: ruolo.impegno
+      ? {
+          livello: ruolo.impegno.livello,
+          citazione: ruolo.impegno.citazione,
+          evidenza: ruolo.impegno.evidenza,
+          motivazione: ruolo.impegno.motivazione,
+        }
+      : {
+          livello: "1",
+          citazione: "",
+          evidenza: false,
+          motivazione: "La job description non descrive l'impegno richiesto.",
+        },
     cosaManca: ruolo.cosaManca,
   } as ClassificazioneGrezza;
 }

@@ -91,6 +91,13 @@ export function creaReportPdf(props: {
                 <Text>{fattore.motivazione}</Text>
               </View>
             ))}
+            <View style={stili.fattore}>
+              <Text style={stili.fattoreNome}>
+                Impegno · {ruolo.impegno.livello}, {ruolo.impegno.etichetta}
+              </Text>
+              <Text>{ruolo.impegno.motivazione}</Text>
+              <Text style={stili.muto}>Non entra nel punteggio Hay.</Text>
+            </View>
             {ruolo.cosaManca.length > 0 ? (
               <Text style={stili.muto}>Cosa manca: {ruolo.cosaManca.join(" ")}</Text>
             ) : null}

@@ -28,6 +28,12 @@ describe("pdf", () => {
           problemSolving: "Adatta metodi noti.",
           responsabilita: "Prepara decisioni su un budget di team.",
         },
+        impegno: {
+          livello: "3",
+          citazione: "attenzione continua sulle chiusure",
+          evidenza: true,
+          motivazione: "Lo sforzo è mentale e continuativo, senza carico fisico descritto.",
+        },
         cosaManca: [],
       }),
     );
