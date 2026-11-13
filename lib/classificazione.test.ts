@@ -90,6 +90,27 @@ describe("componiReport", () => {
     expect(report.cosaManca).toHaveLength(9);
   });
 
+  it("tiene la stima di impegno ricavata da una frase della job description", () => {
+    const base = classificazione();
+    const report = componiReport(
+      "Controller",
+      schemaClassificazione.parse({
+        ...base,
+        impegno: {
+          livello: "4",
+          citazione: "raggiunge i KPI di chiusura entro le scadenze mensili",
+          evidenza: false,
+          motivazione: "Scadenze e KPI implicano un carico elevato, soprattutto mentale.",
+        },
+        cosaManca: ["Manca evidenza sull'impegno."],
+      }),
+    );
+
+    expect(report.impegno).toMatchObject({ livello: "4", etichetta: "Elevato", evidenza: true });
+    expect(report.cosaManca).toEqual([]);
+    expect(report.grade).toBe(3);
+  });
+
   it("pesa la stessa classificazione tre volte con lo stesso grade", () => {
     const grezza = classificazione();
     const pesature = [1, 2, 3].map(() => componiReport("Controller", grezza));

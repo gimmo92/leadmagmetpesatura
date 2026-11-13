@@ -152,8 +152,9 @@ export function componiReport(titolo: string, grezza: ClassificazioneGrezza): Re
   const autonomia = applicaLivello(grezza.responsabilita.autonomia, "A", "autonomia decisionale", mancanze);
   const dimensioneEconomica = applicaLivello(grezza.responsabilita.dimensione, "1", "dimensione economica", mancanze);
   const tipoImpatto = applicaLivello(grezza.responsabilita.impatto, "remoto", "tipo di impatto", mancanze);
+  const citazioneImpegno = grezza.impegno.citazione.trim();
   const impegnoScelto = applicaLivello(
-    grezza.impegno,
+    citazioneImpegno.length > 0 ? { ...grezza.impegno, citazione: citazioneImpegno, evidenza: true } : grezza.impegno,
     "1",
     "impegno",
     mancanze,
@@ -203,7 +204,7 @@ export function componiReport(titolo: string, grezza: ClassificazioneGrezza): Re
     totale: pesatura.totale,
     grade: pesatura.grade,
     confidenza: confidenzaDa(mancanti),
-    cosaManca: mancanze,
+    cosaManca: citazioneImpegno.length > 0 ? mancanze.filter((voce) => !/impegno/i.test(voce)) : mancanze,
     impegno: {
       livello: impegnoScelto.livello as LivelloImpegno,
       etichetta: ETICHETTE_IMPEGNO[impegnoScelto.livello as LivelloImpegno],

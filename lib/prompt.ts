@@ -23,9 +23,11 @@ Autonomia decisionale: A istruzioni puntuali, B eccezioni minori, C sceglie come
 Dimensione economica impattata, come stringhe: "1" importi contenuti, "2" budget di team, "3" risultato di una funzione, "4" quota rilevante del conto economico, "5" risultato complessivo dell'azienda.
 Tipo di impatto: remoto se il contributo passa attraverso altri, contributivo se prepara una decisione altrui, condiviso se decide insieme ad altri, primario se è il responsabile principale del risultato.
 
-Impegno: lo sforzo che il ruolo richiede, mentale, emotivo o fisico. Non è un fattore del punteggio e non va tradotto in punti, percentuali o grade. Va comunque classificato.
+Impegno: lo sforzo che il ruolo richiede, mentale, emotivo o fisico. Non è un fattore del punteggio e non va tradotto in punti, percentuali o grade. Va sempre stimato, anche se la job description non usa le parole sforzo, pressione o carico.
 Scala dell'impegno, come stringhe: "1" contenuto, attività prevedibili con poca pressione; "2" ordinario, attenzione regolare su un lavoro noto; "3" sostenuto, carico mentale o relazionale continuo; "4" elevato, pressione frequente, priorità in conflitto oppure sforzo fisico rilevante; "5" intenso, l'impegno condiziona l'intera giornata.
-Per l'impegno vale la stessa regola di evidenza: citazione breve se la job description descrive lo sforzo, altrimenti evidenza false, citazione vuota e livello "1". La motivazione dell'impegno è di due o tre frasi e dice quale sforzo emerge, mentale, emotivo o fisico. Se un tipo di sforzo non è descritto, non inventarlo.
+Per stimarlo usa scadenze, KPI, volumi, numero di interlocutori, decisioni, turni, reperibilità e ampiezza del perimetro. Una scadenza o un KPI è evidenza sufficiente: non rispondere che non basta a dedurre la pressione.
+evidenza è true e citazione è la frase della job description da cui deduci la stima, anche se quella frase parla di obiettivi e non di sforzo. La motivazione spiega la stima in due o tre frasi e dice se lo sforzo è mentale, emotivo o fisico. Non scrivere che la job description non descrive l'impegno, se ci sono responsabilità o obiettivi da cui stimarlo.
+Non inventare turni, reperibilità o sforzo fisico assenti: se mancano, stima lo sforzo mentale o relazionale dalle responsabilità e dichiaralo. Usa evidenza false, citazione vuota e livello "1" solo se la job description non contiene attività, obiettivi né contesto.
 
 Le motivazioni dei tre fattori sono due o tre frasi in italiano, senza numeri di punteggio e senza grade. Spiegano perché quei livelli discendono dalla job description.
 cosaManca è un array di frasi brevi. Può essere vuoto solo se ogni dimensione, impegno compreso, ha evidenza.`;
