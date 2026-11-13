@@ -5,13 +5,7 @@ describe("webhook", () => {
   it("invia punteggi e grade, mai il testo della job description", () => {
     const payload = costruisciPayload({
       timestamp: "2026-11-13T15:00:00.000Z",
-      lead: {
-        nome: "Ada Rossi",
-        email: "ada@azienda.it",
-        azienda: "Rossi Srl",
-        dipendenti: "50-149",
-        ruolo: "HR Manager",
-      },
+      lead: { email: "ada@azienda.it" },
       utm: { utm_source: "linkedin", utm_medium: "" },
       ruoli: [
         {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CHIAVI_UTM, FASCE_DIPENDENTI, MAX_JD, MAX_RUOLI, TOOL } from "./costanti";
+import { CHIAVI_UTM, MAX_JD, MAX_RUOLI, TOOL } from "./costanti";
 import { schemaClassificazione } from "./classificazione";
 import { MESSAGGIO_EMAIL_AZIENDALE, emailAziendaleConsentita } from "./domini";
 
@@ -38,14 +38,10 @@ const schemaUtm = z.object({
 });
 
 export const schemaLead = z.object({
-  nome: z.string("Scrivi nome e cognome.").trim().min(2, "Scrivi nome e cognome.").max(80, "Il nome è troppo lungo."),
   email: z
     .email("Inserisci un'email valida.")
     .max(200)
     .refine(emailAziendaleConsentita, MESSAGGIO_EMAIL_AZIENDALE),
-  azienda: z.string("Scrivi il nome dell'azienda.").trim().min(2, "Scrivi il nome dell'azienda.").max(120),
-  dipendenti: z.enum(FASCE_DIPENDENTI, "Seleziona il numero di dipendenti."),
-  ruolo: z.string("Scrivi il tuo ruolo.").trim().min(2, "Scrivi il tuo ruolo.").max(120),
   consenso: z.literal(true, "Per continuare serve il consenso al trattamento dei dati."),
   honeypot: z.string().max(200).optional().default(""),
   utm: schemaUtm.optional(),
@@ -66,11 +62,7 @@ export interface PayloadWebhook {
   tool: typeof TOOL;
   timestamp: string;
   lead: {
-    nome: string;
     email: string;
-    azienda: string;
-    dipendenti: string;
-    ruolo: string;
   };
   ruoli: { titolo: string; punteggio: number; grade: number }[];
   utm: Partial<Record<(typeof CHIAVI_UTM)[number], string>>;

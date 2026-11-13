@@ -31,20 +31,14 @@ export async function POST(request: Request) {
     const report = ordinaPerGrade(
       dati.ruoli.map((ruolo) => reportDaClassificazione(ruolo.titolo, ruolo.classificazione)),
     );
-    const lead = {
-      nome: dati.nome,
-      email: dati.email,
-      azienda: dati.azienda,
-      dipendenti: dati.dipendenti,
-      ruolo: dati.ruolo,
-    };
+    const lead = { email: dati.email };
     const logo = await leggiLogo();
     const data = new Intl.DateTimeFormat("it-IT", {
       dateStyle: "long",
       timeZone: "Europe/Rome",
     }).format(new Date());
     const pdf = await renderToBuffer(
-      creaReportPdf({ logo, azienda: dati.azienda, data, ruoli: report }),
+      creaReportPdf({ logo, azienda: dati.email, data, ruoli: report }),
     );
     await inviaReport({ lead, pdf });
     emailInviata = true;

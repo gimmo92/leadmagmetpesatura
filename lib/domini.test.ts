@@ -28,11 +28,7 @@ describe("email aziendale", () => {
 
   it("spiega il rifiuto nel modulo", () => {
     const risultato = schemaLead.safeParse({
-      nome: "Ada Rossi",
       email: "ada@gmail.com",
-      azienda: "Rossi Srl",
-      dipendenti: "50-149",
-      ruolo: "HR",
       consenso: true,
       ruoli: [ruoloMinimo()],
     });

@@ -7,10 +7,8 @@ import {
   CHIAVI_UTM,
   CTA,
   DISCLAIMER,
-  FASCE_DIPENDENTI,
   MAX_JD,
   MAX_RUOLI,
-  type FasciaDipendenti,
 } from "@/lib/costanti";
 import type { ClassificazioneGrezza, ReportRuolo } from "@/lib/classificazione";
 import { MESSAGGIO_EMAIL_AZIENDALE, emailAziendaleConsentita } from "@/lib/domini";
@@ -21,21 +19,13 @@ type Attesa = "jd" | "pesa" | "lead" | null;
 type Modalita = "jd" | "domande";
 
 interface LeadForm {
-  nome: string;
   email: string;
-  azienda: string;
-  dipendenti: FasciaDipendenti | "";
-  ruolo: string;
   consenso: boolean;
   honeypot: string;
 }
 
 const LEAD_VUOTO: LeadForm = {
-  nome: "",
   email: "",
-  azienda: "",
-  dipendenti: "",
-  ruolo: "",
   consenso: false,
   honeypot: "",
 };
@@ -128,12 +118,7 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
   }, [popupMail, attesa]);
 
   const ruoloAttivo = ruoli.find((ruolo) => ruolo.id === selezionato) ?? ruoli[0];
-  const anagraficaPronta =
-    lead.nome.trim().length >= 2 &&
-    emailAziendaleConsentita(lead.email) &&
-    lead.dipendenti !== "" &&
-    lead.ruolo.trim().length >= 2 &&
-    lead.consenso;
+  const anagraficaPronta = emailAziendaleConsentita(lead.email) && lead.consenso;
 
   async function creaBozza() {
     setErrore("");
@@ -218,10 +203,6 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
       setErrore(MESSAGGIO_EMAIL_AZIENDALE);
       return;
     }
-    if (!lead.dipendenti) {
-      setErrore("Seleziona il numero di dipendenti.");
-      return;
-    }
     if (ruoli.length === 0) {
       setErrore("Pesa almeno un ruolo prima di chiedere il report.");
       return;
@@ -229,11 +210,7 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
     setAttesa("lead");
     try {
       await chiama("/api/lead", {
-        nome: lead.nome,
         email: lead.email,
-        azienda: lead.azienda,
-        dipendenti: lead.dipendenti,
-        ruolo: lead.ruolo,
         consenso: true,
         honeypot: lead.honeypot,
         utm,
@@ -468,24 +445,6 @@ export function Pesatura({ privacyUrl }: { privacyUrl: string }) {
                 />
               </div>
               <Campo label="Email aziendale" value={lead.email} onChange={(email) => setLead({ ...lead, email })} type="email" autoComplete="email" maxLength={200} />
-              <Campo label="Nome e cognome" value={lead.nome} onChange={(nome) => setLead({ ...lead, nome })} autoComplete="name" maxLength={80} />
-              <Campo label="Azienda" value={lead.azienda} onChange={(azienda) => setLead({ ...lead, azienda })} autoComplete="organization" maxLength={120} />
-              <label className="flex flex-col gap-1.5 text-sm font-medium">
-                Numero di dipendenti
-                <select
-                  value={lead.dipendenti}
-                  onChange={(evento) => setLead({ ...lead, dipendenti: evento.target.value as FasciaDipendenti | "" })}
-                  className="h-12 rounded-xl border border-linea bg-white px-3 text-base font-normal outline-none focus:border-accento"
-                >
-                  <option value="">Seleziona</option>
-                  {FASCE_DIPENDENTI.map((fascia) => (
-                    <option key={fascia} value={fascia}>
-                      {fascia}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <Campo label="Il tuo ruolo" value={lead.ruolo} onChange={(ruolo) => setLead({ ...lead, ruolo })} autoComplete="organization-title" maxLength={120} />
               <label className="flex items-start gap-2 text-sm font-normal leading-5">
                 <input
                   type="checkbox"

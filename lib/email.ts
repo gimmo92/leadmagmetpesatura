@@ -32,7 +32,7 @@ export async function inviaReport(input: {
   const from = mittente();
   const replyTo = process.env.NOTIFY_EMAIL;
   const testo = [
-    `Ciao ${input.lead.nome},`,
+    "Ciao,",
     "",
     "in allegato c'è la pesatura dei ruoli che hai inserito.",
     `${CTA}: ${CALENDLY_URL}`,
@@ -41,14 +41,14 @@ export async function inviaReport(input: {
   ].join("\n");
 
   const messaggio: Record<string, unknown> = {
-    personalizations: [{ to: [{ email: input.lead.email, name: input.lead.nome }] }],
+    personalizations: [{ to: [{ email: input.lead.email }] }],
     from,
     subject: "Il report di pesatura dei ruoli",
     content: [
       { type: "text/plain", value: testo },
       {
         type: "text/html",
-        value: `<p>Ciao ${escapeHtml(input.lead.nome)},</p><p>in allegato c'è la pesatura dei ruoli che hai inserito.</p><p><a href="${CALENDLY_URL}">${escapeHtml(CTA)}</a></p><p style="color:#5e6673;font-size:13px">${escapeHtml(DISCLAIMER)}</p>`,
+        value: `<p>Ciao,</p><p>in allegato c'è la pesatura dei ruoli che hai inserito.</p><p><a href="${CALENDLY_URL}">${escapeHtml(CTA)}</a></p><p style="color:#5e6673;font-size:13px">${escapeHtml(DISCLAIMER)}</p>`,
       },
     ],
     attachments: [
@@ -85,11 +85,7 @@ export async function inviaNotifica(input: {
   const testo = [
     `Nuovo lead da pesatura Hay`,
     `Quando: ${input.timestamp}`,
-    `Nome: ${input.lead.nome}`,
     `Email: ${input.lead.email}`,
-    `Azienda: ${input.lead.azienda}`,
-    `Dipendenti: ${input.lead.dipendenti}`,
-    `Ruolo: ${input.lead.ruolo}`,
     "",
     "Ruoli pesati:",
     righe,
@@ -101,7 +97,7 @@ export async function inviaNotifica(input: {
     await invia({
       personalizations: [{ to: [{ email: destinatario }] }],
       from: mittente(),
-      subject: `Nuovo lead pesatura — ${input.lead.azienda}`.slice(0, 140),
+      subject: `Nuovo lead pesatura — ${input.lead.email}`.slice(0, 140),
       content: [{ type: "text/plain", value: testo }],
     });
   } catch (error) {
